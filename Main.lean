@@ -1,0 +1,43 @@
+import Descent.Executor
+
+open Descent
+
+/-- Enumerate every list of the requested length over ranks 0,1,2,3. -/
+def worklists : Nat → List (List Nat)
+  | 0 => [[]]
+  | n + 1 => (List.range 4).flatMap fun rank => (worklists n).map (rank :: ·)
+
+/-- Independent bounded FIFO simulation, unlike the verified depth-first executor.
+Fuel belongs only to this regression oracle, never to the verified normalizer. -/
+def referenceRun (children : Nat) : Nat → List Nat → Option Nat
+  | 0, [] => some 0
+  | 0, _ :: _ => none
+  | _ + 1, [] => some 0
+  | fuel + 1, 0 :: rest => (referenceRun children fuel rest).map (· + 1)
+  | fuel + 1, (rank + 1) :: rest =>
+      (referenceRun children fuel (rest ++ List.replicate children rank)).map (· + 1)
+
+def main : IO UInt32 := do
+  IO.println "MULTISET DESCENT | termination with sharp complexity certificates"
+  IO.println "Examples: binary branching, single task, ranks 0 through 8"
+  for rank in List.range 9 do
+    let actual := Executor.steps (fun _ => 2) [rank]
+    IO.println s!"rank={rank}: transitions={actual}, closed form={2 ^ (rank + 1) - 1}"
+  IO.println "A legal expansion [2] -> [1,1,1] increases length 1->3 and rank sum 2->3."
+  IO.println "All such schedules terminate, even when these simpler measures grow."
+  let mut configurations := 0
+  for children in List.range 4 do
+    for length in List.range 4 do
+      for tasks in worklists length do
+        let policy := fun _ => children
+        let actual := Executor.steps policy tasks
+        let predicted := potential policy (tasks : Multiset Nat)
+        let oracle := referenceRun children 1000 tasks
+        if actual != predicted || oracle != some predicted ||
+            Executor.steps policy tasks.reverse != actual || Executor.finish policy tasks != [] then
+          IO.eprintln s!"FAIL: children={children}, tasks={tasks}, steps={actual}, budget={predicted}, FIFO={oracle}"
+          return 1
+        configurations := configurations + 1
+  IO.println s!"PASS: {configurations} configurations; verified executor, independent FIFO simulator, reversed order, and normal form agree."
+  IO.println "Finite regression checks supplement the universal kernel-checked theorems."
+  return 0
