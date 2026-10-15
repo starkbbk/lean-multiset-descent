@@ -25,7 +25,7 @@ run_cmd do
       let unexpected := axioms.filter fun ax => !allowed.contains ax
       unless unexpected.isEmpty do
         throwError "Unexpected proof dependency in {name}: {unexpected}"
-  unless theorems ≥ 50 do
-    throwError "Expected at least 50 project theorems, found {theorems}"
+  unless theorems ≥ 150 do
+    throwError "Expected at least 150 project theorems, found {theorems}"
   logInfo m!"AUDIT PASS: {theorems} theorem declarations (including generated helpers); {declarations} declarations checked."
   logInfo "Allowed foundational axioms: propext, Classical.choice, Quot.sound."

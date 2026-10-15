@@ -1,6 +1,22 @@
 # Theorem index
 
-**60 explicit theorems across eight modules.** Every explicit project theorem is listed below. Compiler-generated recursion and induction helpers are excluded from this inventory. `scripts/verify.py` checks that each entry is present in the proof audit.
+**100 explicit theorems across 11 modules.** Every explicit project theorem is listed below. Compiler-generated recursion and induction helpers are excluded from this inventory. `scripts/verify.py` checks that each entry is present in the proof audit; `python3 scripts/verify.py --write-index` regenerates this file.
+
+## Descent/Battle.lean
+
+- `Descent.Hydra.chopFirst_some`
+- `Descent.Hydra.chopFirst_eq_none`
+- `Descent.Hydra.Regrow.cons`
+- `Descent.Hydra.regrowFirst_regrow`
+- `Descent.Hydra.regrowFirst_eq_none`
+- `Descent.Hydra.strike_move`
+- `Descent.Hydra.strike_eq_none`
+- `Descent.Hydra.terminal_iff_dead`
+- `Descent.Hydra.battle_run`
+- `Descent.Hydra.kirbyParis_run`
+- `Descent.Hydra.battleNext_sound`
+- `Descent.Hydra.normalize_battle`
+- `Descent.Hydra.finalState_eq`
 
 ## Descent/Bounded.lean
 
@@ -45,6 +61,26 @@
 - `Descent.Executor.steps_exact`
 - `Descent.Executor.schedule_order_independent`
 
+## Descent/Hydra.lean
+
+- `Descent.Hydra.heightList_le_iff`
+- `Descent.Hydra.height_le_iff`
+- `Descent.Hydra.height_lt_of_mem`
+- `Descent.Hydra.height_le_of_subset`
+- `Descent.Hydra.Regrow.height_le`
+- `Descent.Hydra.Move.height_le`
+- `Descent.Hydra.measure_replace`
+- `Descent.Hydra.Regrow.measure_lt`
+- `Descent.Hydra.Move.measure_lt`
+- `Descent.Hydra.move_wellFounded`
+- `Descent.Hydra.no_infinite_battle`
+- `Descent.Hydra.move_not_from_dead`
+- `Descent.Hydra.chop_all_heads`
+- `Descent.Hydra.arbitrarily_long_battles`
+- `Descent.Hydra.no_nat_measure`
+- `Descent.Hydra.size_can_increase`
+- `Descent.Hydra.height_need_not_drop`
+
 ## Descent/Normalization.lean
 
 - `Descent.normalize_terminal`
@@ -52,6 +88,19 @@
 - `Descent.normalize_of_terminal`
 - `Descent.normalize_idempotent`
 - `Descent.normalize_preserves`
+
+## Descent/Ordering.lean
+
+- `Descent.dm_of_transGen_replacement`
+- `Descent.transGen_replacement_of_dm`
+- `Descent.transGen_replacement_iff`
+- `Descent.transGen_replacement_eq_dm`
+- `Descent.exists_maximal_mem`
+- `Descent.dm_irrefl`
+- `Descent.dm_asymm`
+- `Descent.DM.lt_iff`
+- `Descent.Nested.ofMultiset_lt_ofMultiset`
+- `Descent.nested_wellFounded`
 
 ## Descent/Potential.lean
 

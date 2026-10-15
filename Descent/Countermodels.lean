@@ -1,8 +1,7 @@
-import Mathlib.Order.Lattice.Nat
-
 import Descent.Bounded
 import Mathlib.Data.Int.Basic
 import Mathlib.Data.Multiset.Lattice
+import Mathlib.Order.Lattice.Nat
 
 /-!
 # Why the hypotheses and the multiset measure matter

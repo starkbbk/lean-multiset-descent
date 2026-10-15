@@ -1,4 +1,5 @@
 import Descent.Executor
+import Descent.Battle
 
 open Descent
 
@@ -16,6 +17,22 @@ def referenceRun (children : Nat) : Nat → List Nat → Option Nat
   | fuel + 1, 0 :: rest => (referenceRun children fuel rest).map (· + 1)
   | fuel + 1, (rank + 1) :: rest =>
       (referenceRun children fuel (rest ++ List.replicate children rank)).map (· + 1)
+
+/-- A path of the given number of edges from the root to its only head. -/
+def path : Nat → Hydra
+  | 0 => .node []
+  | n + 1 => .node [path n]
+
+/-- Small hydras whose Kirby–Paris battles finish quickly. The four-edge path does not. -/
+def hydraSamples : List Hydra :=
+  let h : Hydra := .node []
+  [path 1, path 2, path 3, .node [h, h, h, h, h], .node [.node [h, h]],
+    .node [.node [h], .node [h]], .node [h, .node [h, h]], .node [h, h, .node [h, h]],
+    .node [.node [h], .node [h, h]], .node [.node [h], .node [h, h], h]]
+
+def isDead : Hydra → Bool
+  | .node [] => true
+  | _ => false
 
 def main : IO UInt32 := do
   IO.println "MULTISET DESCENT | termination with sharp complexity certificates"
@@ -39,5 +56,16 @@ def main : IO UInt32 := do
           return 1
         configurations := configurations + 1
   IO.println s!"PASS: {configurations} configurations; verified executor, independent FIFO simulator, reversed order, and normal form agree."
+  IO.println "HYDRA BATTLES | Kirby–Paris schedule: stage n regrows n new copies"
+  let mut battles := 0
+  for hydra in hydraSamples do
+    let moves := Hydra.kirbyParisLength hydra
+    let (final, stage) := Hydra.finalState id hydra
+    if !isDead final || stage != moves + 1 then
+      IO.eprintln s!"FAIL: hydra={hydra.render}, counter={moves}, normalizer stage={stage}"
+      return 1
+    IO.println s!"KP hydra={hydra.render} moves={moves}"
+    battles := battles + 1
+  IO.println s!"PASS: {battles} battles; move counter and generic normalizer agree, and every hydra dies."
   IO.println "Finite regression checks supplement the universal kernel-checked theorems."
   return 0

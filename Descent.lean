@@ -6,3 +6,6 @@ import Descent.Potential
 import Descent.Executor
 import Descent.Bounded
 import Descent.Countermodels
+import Descent.Ordering
+import Descent.Hydra
+import Descent.Battle
