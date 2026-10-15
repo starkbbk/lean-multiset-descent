@@ -9,3 +9,4 @@ import Descent.Countermodels
 import Descent.Ordering
 import Descent.Hydra
 import Descent.Battle
+import Descent.Goodstein

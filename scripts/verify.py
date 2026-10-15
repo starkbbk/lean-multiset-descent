@@ -14,6 +14,8 @@ INDEX = ROOT / "docs" / "THEOREMS.md"
 THEOREM = re.compile(r"^(?:@\[[^\]]*\]\s+)?(?:protected\s+)?theorem\s+([\w.']+)")
 BATTLE = re.compile(r"^KP hydra=(\S+) moves=(\d+)$", re.M)
 MIN_BATTLES = 10
+GOODSTEIN_LENGTH = re.compile(r"^GOODSTEIN n=(\d+) length=(\d+)$", re.M)
+GOODSTEIN_PREFIX = re.compile(r"^GOODSTEIN n=(\d+) prefix=([\d,]+)$", re.M)
 
 
 def run(*command: str) -> str:
@@ -120,6 +122,54 @@ def check_battles(demo: str) -> None:
           flush=True)
 
 
+# An independent Python model of Goodstein's sequence. Unlike Descent/Goodstein.lean, which
+# peels off the leading term, it reads the digits from the least significant end.
+
+def hereditary_bump(n: int, base: int) -> int:
+    total, place = 0, 0
+    while n:
+        n, digit = divmod(n, base)
+        if digit:
+            total += digit * (base + 1) ** hereditary_bump(place, base)
+        place += 1
+    return total
+
+
+def goodstein_values(n: int, stages: int) -> list[int]:
+    values = [n]
+    for stage in range(stages - 1):
+        values.append(max(hereditary_bump(values[-1], stage + 2) - 1, 0))
+    return values
+
+
+def goodstein_length(n: int, limit: int = 1_000) -> int:
+    value, stage = n, 0
+    while value:
+        value = hereditary_bump(value, stage + 2) - 1
+        stage += 1
+        if stage > limit:
+            raise SystemExit("Python Goodstein oracle exceeded its stage limit")
+    return stage
+
+
+def check_goodstein(demo: str) -> None:
+    lengths = GOODSTEIN_LENGTH.findall(demo)
+    prefixes = GOODSTEIN_PREFIX.findall(demo)
+    if len(lengths) < 4 or len(prefixes) < 2 or "PASS: Goodstein lengths" not in demo:
+        raise SystemExit("Goodstein demonstration did not complete")
+    for n, length in lengths:
+        expected = goodstein_length(int(n))
+        if int(length) != expected:
+            raise SystemExit(f"Goodstein length mismatch for {n}: Lean {length}, Python {expected}")
+    for n, listed in prefixes:
+        values = [int(value) for value in listed.split(",")]
+        expected = goodstein_values(int(n), len(values))
+        if values != expected:
+            raise SystemExit(f"Goodstein sequence mismatch for {n}: Lean {values}, Python {expected}")
+    print(f"PASS: {len(lengths)} Goodstein lengths and {len(prefixes)} sequence prefixes match an "
+          "independent Python simulation", flush=True)
+
+
 def test_audit_rejects_invalid_proofs() -> None:
     audit = (ROOT / "Audit.lean").read_text()
     marker = "open Lean Elab Command in"
@@ -175,6 +225,7 @@ def main() -> None:
     if "PASS: 340 configurations" not in demo:
         raise SystemExit("Exhaustive regression sweep did not complete")
     check_battles(demo)
+    check_goodstein(demo)
     if run("lake", "exe", "descent-demo") != demo:
         raise SystemExit("Demonstration output differs between runs")
     print("PASS: demonstration output is identical across two runs", flush=True)

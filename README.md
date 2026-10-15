@@ -4,20 +4,41 @@
 ![Lean](https://img.shields.io/badge/Lean-4.33.0--rc1-blue)
 ![Mathlib](https://img.shields.io/badge/Mathlib-pinned-purple)
 
-**A Lean 4 / Mathlib development built on Mathlib's Dershowitz–Manna theorem: a public characterization of the order, well-founded nested multisets of every depth, termination of the Kirby–Paris hydra game, and sharp complexity certificates for branching worklists, each with a total executable counterpart.**
+**Two termination theorems that Peano arithmetic cannot prove, the Kirby–Paris hydra game and Goodstein's theorem, formalized in Lean 4 from one source: Mathlib's Dershowitz–Manna theorem, iterated into nested multisets. The development also proves a public characterization of the Dershowitz–Manna order and sharp complexity certificates for branching worklists, each with a total executable counterpart.**
 
 | Result | Lean statement | Module |
 | --- | --- | --- |
-| The Dershowitz–Manna order is the transitive closure of single-element replacement | [`transGen_replacement_eq_dm`](Descent/Ordering.lean) | Ordering |
-| It is irreflexive over every preorder, hence a partial order on the synonym `DM α` | [`dm_irrefl`](Descent/Ordering.lean) | Ordering |
-| Multisets nested to any finite depth are well founded | [`nested_wellFounded`](Descent/Ordering.lean) | Ordering |
+| Goodstein's theorem: every Goodstein sequence reaches zero | [`goodstein_terminates`](Descent/Goodstein.lean) | Goodstein |
+| Hereditary notation survives a change of base and is strictly monotone into nested multisets | [`rep_bump`](Descent/Goodstein.lean), [`measure_rep_lt`](Descent/Goodstein.lean) | Goodstein |
 | Every hydra battle ends, whichever heads are cut and however many copies regrow | [`move_wellFounded`](Descent/Hydra.lean), [`no_infinite_battle`](Descent/Hydra.lean) | Hydra |
+| The Dershowitz–Manna order is the transitive closure of single-element replacement | [`transGen_replacement_eq_dm`](Descent/Ordering.lean) | Ordering |
+| It is irreflexive over every preorder, and trichotomous over every trichotomous order | [`dm_irrefl`](Descent/Ordering.lean), [`dm_trichotomous`](Descent/Ordering.lean) | Ordering |
+| Multisets nested to any finite depth form a well-order | [`nested_wellFounded`](Descent/Ordering.lean), [`Nested.instIsWellOrder`](Descent/Ordering.lean) | Ordering |
 | Termination gives no uniform bound: one fixed hydra has arbitrarily long battles, so no natural-number measure works | [`arbitrarily_long_battles`](Descent/Hydra.lean), [`no_nat_measure`](Descent/Hydra.lean) | Hydra |
 | A total executable battle whose computed length is witnessed by a legal battle that kills the hydra | [`battle_run`](Descent/Battle.lean), [`normalize_battle`](Descent/Battle.lean) | Battle |
 | Bounded adversarial branching: a universal budget and a complete run attaining it exactly | [`sharp_worst_case`](Descent/Bounded.lean) | Bounded |
 | Fixed branching: every complete schedule has the same, exactly computed length | [`complete_schedules_equal_length`](Descent/Potential.lean) | Potential |
 
-**100 explicit theorems · 11 proof modules · two verified total executors · 340 scheduler configurations · 10 hydra battles cross-checked against an independent Python simulation · dependency audit with negative controls.**
+**135 explicit theorems · 12 proof modules · three verified total executors · 340 scheduler configurations · 10 hydra battles and 6 Goodstein runs cross-checked against independent Python simulations · dependency audit with negative controls.**
+
+## Goodstein's theorem
+
+Write `n` in hereditary base 2, so that every exponent is itself written in base 2: `4 = 2^2 = 2^(2^1)`. Replace every 2 by 3 and subtract one: `3^(3^1) − 1 = 26`. Then write 26 in hereditary base 3, replace every 3 by 4, subtract one, and so on. Goodstein (1944) proved that this sequence always reaches zero. Kirby and Paris (1982) proved that Peano arithmetic cannot prove it.
+
+[`goodstein_terminates`](Descent/Goodstein.lean) proves it for every starting value. The hereditary notation of `n` in base `b` is built as a hydra-shaped tree whose children are the notations of the exponents, one child per unit of each digit. [`value_rep`](Descent/Goodstein.lean) checks that the tree denotes `n`, and [`digit_lt`](Descent/Goodstein.lean) that its digits are genuine base-`b` digits. Two lemmas carry the proof:
+
+1. [`rep_bump`](Descent/Goodstein.lean): rewriting the notation in base `b + 1` produces a number whose base-`b + 1` notation is literally the same tree.
+2. [`measure_rep_lt`](Descent/Goodstein.lean): if `x < y`, then the notation of `x` is below that of `y` in the nested Dershowitz–Manna order, the same measure that ends hydra battles.
+
+So each stage keeps the tree and then strictly lowers it, at a nesting depth fixed by the starting value, and Mathlib's theorem iterated over that depth rules out an infinite sequence. [`goodsteinLength`](Descent/Goodstein.lean) is a total, executable search for the first zero, whose termination is exactly Goodstein's theorem:
+
+| Start | Sequence | First zero at stage |
+| --- | --- | --- |
+| 3 | 3, 3, 3, 2, 1, 0 | 5 |
+| 4 | 4, 26, 41, 60, 83, 109, 139, 173, 211, 253, … | about 3·2^402,653,211 |
+| 5 | 5, 27, 255, 467, 775, 1197, 1751, 2454, 3325, 4382, … | far larger |
+
+The demo computes the lengths for starts 0–3 and the sequence prefixes from 4 and 5. Lengths from 4 onward are far beyond any computation; the table's estimate for 4 is the known value from the literature, not computed here.
 
 ## Hydra battles
 
@@ -92,14 +113,14 @@ lake env lean Audit.lean
 python3 scripts/verify.py --write-index
 ```
 
-The demo runs the verified depth-first executor against an independent fuel-bounded FIFO simulator, reversed task order, the potential formula, and the final normal form on all 340 configurations (offspring 0–3; list length 0–3; ranks 0–3). It then runs ten Kirby–Paris battles, checking that the move counter and the generic normalizer agree and that every hydra dies. `scripts/verify.py` recomputes each battle length with an independent Python simulation and checks that two demo runs print identical output. Fuel exists only in the FIFO regression oracle. The verified normalizers and counters use checked well-founded recursion with no fuel parameter or partial function.
+The demo runs the verified depth-first executor against an independent fuel-bounded FIFO simulator, reversed task order, the potential formula, and the final normal form on all 340 configurations (offspring 0–3; list length 0–3; ranks 0–3). It then runs ten Kirby–Paris battles, checking that the move counter and the generic normalizer agree and that every hydra dies. Finally it computes Goodstein lengths for starts 0–3, checking that each is the first zero and that the sequence stays at zero, and prints ten-stage prefixes from 4 and 5. `scripts/verify.py` recomputes every battle length and every Goodstein value with independent Python simulations, and checks that two demo runs print identical output. Fuel exists only in the FIFO regression oracle. The verified normalizers and counters use checked well-founded recursion with no fuel parameter or partial function.
 
 ## Review the proofs
 
 | Module | Role |
 | --- | --- |
 | [Replacement](Descent/Replacement.lean) | Generic contextual replacement, Mathlib bridge, well-foundedness and absence of cycles |
-| [Ordering](Descent/Ordering.lean) | Dershowitz–Manna order as the transitive closure of replacement, irreflexivity over preorders, the `DM` partial order, nested multisets of every depth |
+| [Ordering](Descent/Ordering.lean) | Dershowitz–Manna order as the transitive closure of replacement, irreflexivity over preorders, trichotomy over trichotomous orders, the `DM` partial order, nested multisets of every depth as well-orders |
 | [Normalization](Descent/Normalization.lean) | Strategy-parametric total normalizer, terminality, actual strategy reachability, idempotence, invariant preservation |
 | [Runs](Descent/Runs.lean) | Length-indexed executions, composition, relation inclusion |
 | [Branching](Descent/Branching.lean) | Unbounded nondeterministic rewriting, no infinite schedules, arbitrarily long complete runs, unique normal form |
@@ -109,6 +130,7 @@ The demo runs the verified depth-first executor against an independent fuel-boun
 | [Countermodels](Descent/Countermodels.lean) | Failed scalar measures, non-strict self-loop, infinite descent over integers |
 | [Hydra](Descent/Hydra.lean) | Kirby–Paris moves, nested-multiset measure, height monotonicity, termination, arbitrarily long battles, failed size measures |
 | [Battle](Descent/Battle.lean) | Hercules' executable strategy, soundness of each strike, the bare root as the only terminal hydra, total battle length, agreement with the generic normalizer |
+| [Goodstein](Descent/Goodstein.lean) | Hereditary base notation as trees, correctness of the notation, base change and its monotonicity, the order embedding into nested multisets, Goodstein's theorem, total length search |
 
 Start with the [reviewer guide](docs/REVIEWER_GUIDE.md), [mathematical model](docs/MODEL.md), [complete theorem index](docs/THEOREMS.md), and [verification details](docs/VERIFICATION.md).
 
@@ -116,7 +138,7 @@ Start with the [reviewer guide](docs/REVIEWER_GUIDE.md), [mathematical model](do
 
 The foundational Dershowitz–Manna theorem is **Mathlib's existing work**, imported from [`Mathlib.Data.Multiset.DershowitzManna`](https://github.com/leanprover-community/mathlib4/blob/9944fe2973b8dc0b86949101ed98232c07cd54a0/Mathlib/Data/Multiset/DershowitzManna.lean), whose listed authors are Haitian Wang and Malvin Gattinger. [Mathlib PR #14411](https://github.com/leanprover-community/mathlib4/pull/14411) is prior work and inspiration. Mathlib also proves the transitive-closure characterization internally, through a private relation; `transGen_replacement_eq_dm` is a separate public proof for this repository's `Replacement`. This repository does not claim authorship of the Dershowitz–Manna theorem or an upstream Mathlib contribution.
 
-The mathematics is classical: multiset and nested multiset orderings are due to Dershowitz and Manna, *Proving termination with multiset orderings* (Communications of the ACM, 1979), and the hydra game to Kirby and Paris, *Accessible independence results for Peano arithmetic* (Bulletin of the London Mathematical Society, 1982). This repository's development is the public characterization, the nested-multiset construction, the hydra and battle formalization, the replacement interface, normalization framework, three branching models, exact and attained cost bounds, executable refinements, and hypothesis countermodels. It is an applied formalization, not a claim that these mathematical ideas are novel research. Development was AI-assisted; the public source, Lean kernel checks, dependency audit, and CI make the result independently inspectable. Hosting this repository alone does not establish unaided Lean expertise.
+The mathematics is classical: multiset and nested multiset orderings are due to Dershowitz and Manna, *Proving termination with multiset orderings* (Communications of the ACM, 1979); Goodstein's theorem to Goodstein, *On the restricted ordinal theorem* (Journal of Symbolic Logic, 1944); and the hydra game and both independence results to Kirby and Paris, *Accessible independence results for Peano arithmetic* (Bulletin of the London Mathematical Society, 1982). This repository's development is the public characterization and trichotomy of the order, the nested-multiset construction, the hydra and battle formalization, the Goodstein formalization through hereditary notation as trees, the replacement interface, normalization framework, three branching models, exact and attained cost bounds, executable refinements, and hypothesis countermodels. It is an applied formalization, not a claim that these mathematical ideas are novel research. Development was AI-assisted; the public source, Lean kernel checks, dependency audit, and CI make the result independently inspectable. Hosting this repository alone does not establish unaided Lean expertise.
 
 Proof dependencies are restricted to `propext`, `Classical.choice`, and `Quot.sound`. The audit rejects project axioms, unfinished proofs, and other proof axioms, including native decision axioms. See [verification](docs/VERIFICATION.md) for the precise trust boundary.
 

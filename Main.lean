@@ -1,5 +1,6 @@
 import Descent.Executor
 import Descent.Battle
+import Descent.Goodstein
 
 open Descent
 
@@ -67,5 +68,18 @@ def main : IO UInt32 := do
     IO.println s!"KP hydra={hydra.render} moves={moves}"
     battles := battles + 1
   IO.println s!"PASS: {battles} battles; move counter and generic normalizer agree, and every hydra dies."
+  IO.println "GOODSTEIN | stage k writes the value in hereditary base k+2, rewrites it in base k+3, subtracts one"
+  for n in List.range 4 do
+    let length := Goodstein.goodsteinLength n
+    if Goodstein.goodstein n length != 0 ||
+        (List.range length).any (fun k => Goodstein.goodstein n k == 0) ||
+        (List.range 3).any (fun j => Goodstein.goodstein n (length + j + 1) != 0) then
+      IO.eprintln s!"FAIL: goodstein n={n} length={length}"
+      return 1
+    IO.println s!"GOODSTEIN n={n} length={length}"
+  for n in [4, 5] do
+    let values := (List.range 10).map (Goodstein.goodstein n)
+    IO.println s!"GOODSTEIN n={n} prefix={",".intercalate (values.map toString)}"
+  IO.println "PASS: Goodstein lengths come from a total search justified by goodstein_terminates."
   IO.println "Finite regression checks supplement the universal kernel-checked theorems."
   return 0

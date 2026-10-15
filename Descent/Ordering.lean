@@ -86,6 +86,49 @@ theorem dm_irrefl (M : Multiset α) : ¬ IsDershowitzMannaLT M M := by
 theorem dm_asymm (h : IsDershowitzMannaLT M N) : ¬ IsDershowitzMannaLT N M :=
   fun h' => dm_irrefl M (h.trans h')
 
+/-- Over a trichotomous order the Dershowitz–Manna order is trichotomous too. After removing the
+common part, the larger multiset is the one holding the largest remaining element. -/
+theorem dm_trichotomous (htri : ∀ a b : α, a < b ∨ a = b ∨ b < a) (M N : Multiset α) :
+    IsDershowitzMannaLT M N ∨ M = N ∨ IsDershowitzMannaLT N M := by
+  classical
+  have hM : M = M ∩ N + (M - M ∩ N) := (add_tsub_cancel_of_le Multiset.inter_le_left).symm
+  have hN : N = M ∩ N + (N - M ∩ N) := (add_tsub_cancel_of_le Multiset.inter_le_right).symm
+  have hdisj : ∀ a, a ∈ M - M ∩ N → a ∈ N - M ∩ N → False := by
+    intro a ha hb
+    rw [← Multiset.count_pos] at ha hb
+    simp only [Multiset.count_sub, Multiset.count_inter] at ha hb
+    omega
+  by_cases hY : M - M ∩ N = 0
+  · by_cases hZ : N - M ∩ N = 0
+    · rw [hY, add_zero] at hM
+      rw [hZ, add_zero] at hN
+      exact .inr (.inl (hM.trans hN.symm))
+    · exact .inl ⟨M ∩ N, 0, N - M ∩ N, by simpa [Multiset.empty_eq_zero] using hZ,
+        by rw [add_zero]; exact hM.trans (by rw [hY, add_zero]), hN, by simp⟩
+  by_cases hZ : N - M ∩ N = 0
+  · exact .inr (.inr ⟨M ∩ N, 0, M - M ∩ N, by simpa [Multiset.empty_eq_zero] using hY,
+      by rw [add_zero]; exact hN.trans (by rw [hZ, add_zero]), hM, by simp⟩)
+  obtain ⟨m, hm, hmax⟩ := exists_maximal_mem (Z := (M - M ∩ N) + (N - M ∩ N))
+    (by simp [hY])
+  have below : ∀ z ∈ (M - M ∩ N) + (N - M ∩ N), z ≠ m → z < m := fun z hz hzm => by
+    rcases htri z m with h | h | h
+    exacts [h, absurd h hzm, absurd h (hmax z hz)]
+  rcases Multiset.mem_add.1 hm with hmY | hmZ
+  · refine .inr (.inr ⟨M ∩ N, N - M ∩ N, M - M ∩ N, by simpa [Multiset.empty_eq_zero] using hY,
+      hN, hM, fun z hz => ⟨m, hmY, below z (Multiset.mem_add.2 (.inr hz)) ?_⟩⟩)
+    rintro rfl
+    exact hdisj z hmY hz
+  · refine .inl ⟨M ∩ N, M - M ∩ N, N - M ∩ N, by simpa [Multiset.empty_eq_zero] using hZ,
+      hM, hN, fun z hz => ⟨m, hmZ, below z (Multiset.mem_add.2 (.inl hz)) ?_⟩⟩
+    rintro rfl
+    exact hdisj z hz hmZ
+
+/-- A common context can be added to both sides of a Dershowitz–Manna descent. -/
+theorem dm_add_left (h : IsDershowitzMannaLT M N) (K : Multiset α) :
+    IsDershowitzMannaLT (K + M) (K + N) := by
+  obtain ⟨X, Y, Z, hZ, rfl, rfl, hYZ⟩ := h
+  exact ⟨K + X, Y, Z, hZ, (add_assoc _ _ _).symm, (add_assoc _ _ _).symm, hYZ⟩
+
 /-- Multisets compared by the Dershowitz–Manna order instead of by inclusion. -/
 structure DM (α : Type*) where
   /-- The underlying multiset. -/
@@ -142,5 +185,19 @@ theorem Nested.ofMultiset_lt_ofMultiset {d : ℕ} {M N : Multiset (Nested d)} :
 /-- Every finite nesting depth is well founded, by iterating Mathlib's theorem. -/
 theorem nested_wellFounded (d : ℕ) : WellFounded ((· < ·) : Nested d → Nested d → Prop) :=
   wellFounded_lt
+
+/-- Any two nested multisets of the same depth are comparable. -/
+theorem Nested.lt_trichotomy : ∀ (d : ℕ) (x y : Nested d), x < y ∨ x = y ∨ y < x
+  | 0, _, _ => .inr (.inl rfl)
+  | d + 1, ⟨M⟩, ⟨N⟩ => by
+    rcases dm_trichotomous (Nested.lt_trichotomy d) M N with h | rfl | h
+    exacts [.inl h, .inr (.inl rfl), .inr (.inr h)]
+
+/-- Each nesting depth is a well-order, so it has an ordinal as its order type. -/
+instance Nested.instIsWellOrder (d : ℕ) : IsWellOrder (Nested d) (· < ·) where
+  wf := nested_wellFounded d
+  trichotomous x y hxy hyx := by
+    rcases Nested.lt_trichotomy d x y with h | h | h
+    exacts [absurd h hxy, h, absurd h hyx]
 
 end Descent

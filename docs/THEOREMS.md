@@ -1,6 +1,6 @@
 # Theorem index
 
-**100 explicit theorems across 11 modules.** Every explicit project theorem is listed below. Compiler-generated recursion and induction helpers are excluded from this inventory. `scripts/verify.py` checks that each entry is present in the proof audit; `python3 scripts/verify.py --write-index` regenerates this file.
+**135 explicit theorems across 12 modules.** Every explicit project theorem is listed below. Compiler-generated recursion and induction helpers are excluded from this inventory. `scripts/verify.py` checks that each entry is present in the proof audit; `python3 scripts/verify.py --write-index` regenerates this file.
 
 ## Descent/Battle.lean
 
@@ -61,6 +61,41 @@
 - `Descent.Executor.steps_exact`
 - `Descent.Executor.schedule_order_independent`
 
+## Descent/Goodstein.lean
+
+- `Descent.Goodstein.value_node`
+- `Descent.Goodstein.valueList_append`
+- `Descent.Goodstein.valueList_replicate`
+- `Descent.Goodstein.pow_exponent_pos`
+- `Descent.Goodstein.pow_exponent_le`
+- `Descent.Goodstein.exponent_lt`
+- `Descent.Goodstein.remainder_lt_pow`
+- `Descent.Goodstein.remainder_lt`
+- `Descent.Goodstein.digit_pos`
+- `Descent.Goodstein.digit_lt`
+- `Descent.Goodstein.pow_mul_digit_add_remainder`
+- `Descent.Goodstein.terms_zero`
+- `Descent.Goodstein.terms_of_ne_zero`
+- `Descent.Goodstein.rep_zero`
+- `Descent.Goodstein.value_rep`
+- `Descent.Goodstein.rep_exponent_mem`
+- `Descent.Goodstein.mem_terms`
+- `Descent.Goodstein.le_exponent_of_pow_le`
+- `Descent.Goodstein.bump_zero`
+- `Descent.Goodstein.bump_of_ne_zero`
+- `Descent.Goodstein.bump_pow`
+- `Descent.Goodstein.bump_lt_bump`
+- `Descent.Goodstein.bump_lt_pow`
+- `Descent.Goodstein.bump_pos`
+- `Descent.Goodstein.rep_bump`
+- `Descent.Goodstein.height_rep_mono`
+- `Descent.Goodstein.measure_rep_lt`
+- `Descent.Goodstein.goodstein_terminates`
+- `Descent.Goodstein.goodstein_succ_eq_zero`
+- `Descent.Goodstein.goodstein_goodsteinLength`
+- `Descent.Goodstein.goodstein_ne_zero_of_lt`
+- `Descent.Goodstein.goodstein_eq_zero_of_le`
+
 ## Descent/Hydra.lean
 
 - `Descent.Hydra.heightList_le_iff`
@@ -98,9 +133,12 @@
 - `Descent.exists_maximal_mem`
 - `Descent.dm_irrefl`
 - `Descent.dm_asymm`
+- `Descent.dm_trichotomous`
+- `Descent.dm_add_left`
 - `Descent.DM.lt_iff`
 - `Descent.Nested.ofMultiset_lt_ofMultiset`
 - `Descent.nested_wellFounded`
+- `Descent.Nested.lt_trichotomy`
 
 ## Descent/Potential.lean
 
